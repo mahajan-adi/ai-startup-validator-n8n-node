@@ -136,15 +136,6 @@ const RECOMMENDATION_PROMPT = `You are a startup investment advisor. You will be
 {"recommendation": "Go" | "Pivot" | "Stop", "reasoning": string}
 recommendation must be exactly one of the three literal strings "Go", "Pivot", or "Stop". reasoning should be 2-4 sentences justifying the call based on the research and scores provided.`;
 
-const SYNTHESIS_SCORES_PROMPT = `You are a senior startup analyst. You will be given a startup idea and a set of research findings about it. Return ONLY valid JSON (no Markdown code fences, no commentary) with exactly this shape:
-{"executiveSummary": string, "overallScore": number, "feasibilityScore": number, "marketOpportunityScore
-": number}
-executiveSummary should be a concise one-page overview (4-6 sentences) synthesizing the research. All three scores must be integers from 0 to 100, where 100 is the strongest possible outcome.`;
-
-const RECOMMENDATION_PROMPT = `You are a startup investment advisor. You will be given a startup idea, research findings, and scores. Return ONLY valid JSON (no Markdown code fences, no commentary) with exactly this shape:
-{"recommendation": "Go" | "Pivot" | "Stop", "reasoning": string}
-recommendation must be exactly one of the three literal strings "Go", "Pivot", or "Stop". reasoning should be 2-4 sentences justifying the call based on the research and scores provided.`;
-
 const SECTION_TITLES: Record<string, string> = {
 	competitors: 'Competitors',
 	marketSize: 'Market Size',
@@ -291,6 +282,41 @@ export class AiStartupValidator implements INodeType {
 			const sectionResults: { title: string; content: string }[] = [];
 
 			for (const sectionKey of sections) {
+				const research = sectionResults.map((s) => `${s.title}:\n${s.content}`).join('\n\n');
+
+				const synthesis = await callOpenAi(
+					openAiApiKey,
+					model,
+					SYNTHESIS_SCORES_PROMPT,
+					`
+Startup idea:
+${startupIdea}
+
+Research:
+${research}
+`,
+				);
+
+				const recommendation = await callOpenAi(
+					openAiApiKey,
+					model,
+					RECOMMENDATION_PROMPT,
+					`
+Startup idea:
+${startupIdea}
+
+Research:
+${research}
+
+Scores:
+${synthesis}
+`,
+				);
+
+				sectionResults.push({
+					title: 'AI Recommendation',
+					content: recommendation,
+				});
 				const title = SECTION_TITLES[sectionKey];
 
 				if (sectionKey === 'competitors') {
