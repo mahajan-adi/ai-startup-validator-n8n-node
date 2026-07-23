@@ -3,14 +3,19 @@ import {
 	IAuthenticateGeneric,
 	ICredentialTestRequest,
 	ICredentialType,
-	INodeProperties,
+	INodeProperties
 } from 'n8n-workflow';
 
 export class AiStartupValidatorApi implements ICredentialType {
 	name = 'aiStartupValidatorApi';
 	displayName = 'AI Startup Validator API';
 	documentationUrl = 'https://platform.openai.com/docs/api-reference';
-	icon: Icon = 'file:aiStartupValidator.svg';
+
+	icon: Icon = {
+	light: 'file:aiStartupValidator.svg',
+	dark: 'file:aiStartupValidator.dark.svg',
+};
+	
 
 	properties: INodeProperties[] = [
 		{
